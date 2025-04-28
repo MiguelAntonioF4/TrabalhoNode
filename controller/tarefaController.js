@@ -1,59 +1,70 @@
-const express = require("express")
-const Tarefa = require('../models/tarefa')
+const express = require('express');
+const Tarefa = require('../models/tarefa');
 
-const router = express.Router()
+const router = express.Router();
 
-router.get("/tarefa", (req, res) => {
-    res.json(Tarefa)
-})
+// criar tarefa
+router.post('/tarefa', async (req, res) => {
+  const { titulo, status, idUsuario, idProjeto } = req.body;
 
-router.post("/tarefa/:titulo/:status/:idUsuario/:idProjeto", (req, res) => {
-    let {titulo, status, idUsuario, idProjeto} = req.params // params pega elementos pela url :)
-    if(Tarefa.length == 0){
-        let id = 1
-        var tarefa = {
-            id: id,
-            titulo: titulo,
-            status: status,
-            idUsuario: idUsuario,
-            idProjeto: idProjeto
-        }
-    }else{
-        var tarefa = {
-            id: Tarefa.length + 1,
-            titulo: titulo,
-            status: status,
-            idUsuario: idUsuario,
-            idProjeto: idProjeto
-        }
-    }
-    
-    Tarefa.push(tarefa)
-    res.json(Tarefa)
-})
+  try {
+    const tarefa = await Tarefa.create({ titulo, status, idUsuario, idProjeto });
+    res.status(201).json(tarefa);
+  } catch (error) {
+    res.status(400).json({ error: 'Erro ao criar tarefa.' });
+  }
+});
 
-router.put("/tarefa/:id/:titulo/:status/:idUsuario/:idProjeto", (req, res) => {
-    let {id, titulo, status, idUsuario, idProjeto} = req.params
-    let tarefa = Tarefa.find(p => p.id == id)
-    if(tarefa){
-        let atualizar = {
-            titulo: titulo,
-            status: status,
-            idUsuario: idUsuario,
-            idProjeto: idProjeto
-        }
-        Object.assign(tarefa,atualizar)  // assign att o json
-    }
-    res.json(Tarefa)
-})
+// buscar todas as tarefas
+router.get('/tarefas', async (req, res) => {
+  try {
+    const tarefas = await Tarefa.findAll();
+    res.json(tarefas);
+  } catch (error) {
+    res.status(400).json({ error: 'Erro ao buscar tarefas.' });
+  }
+});
 
-router.delete("/tarefa/:id", (req, res) => {
-    let id = req.params.id
-    let index = Tarefa.findIndex(p => p.id == id)
-    if(index != -1){
-        Tarefa.splice(index, 1)
-    }
-    res.json(Tarefa)
-})
+// atualizar a tarefa escolida
+router.put('/tarefa/:id', async (req, res) => {
+  const { id } = req.params;
+  const { titulo, status, idUsuario, idProjeto } = req.body;
 
-module.exports = router
+  // ver se a tarefa ja existe
+  const tarefa = await Tarefa.findByPk(id);
+  if (!tarefa) {
+    return res.status(400).json({ error: 'Tarefa não encontrada.' });
+  }
+
+  // atualizando os dados da tarefa
+  tarefa.titulo = titulo;
+  tarefa.status = status;
+  tarefa.idUsuario = idUsuario;
+  tarefa.idProjeto = idProjeto;
+
+  try {
+    await tarefa.save();
+    res.json(tarefa);
+  } catch (error) {
+    res.status(400).json({ error: 'Erro ao atualizar tarefa.' });
+  }
+});
+
+// Deletar uma tarefa
+router.delete('/tarefa/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const tarefa = await Tarefa.findByPk(id);
+  if (!tarefa) {
+    return res.status(400).json({ error: 'Tarefa não encontrada.' });
+  }
+
+  try {
+    await tarefa.destroy();
+    res.json({ message: 'Tarefa deletada com sucesso.' });
+  } catch (error) {
+    res.status(400).json({ error: 'Erro ao deletar tarefa.' });
+  }
+});
+
+module.exports = router;

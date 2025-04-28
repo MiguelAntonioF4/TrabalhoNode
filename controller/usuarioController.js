@@ -1,57 +1,110 @@
-const express = require("express")
-const Usuario = require('../models/usuario')
+const express = require('express');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const Usuario = require('../models/usuario'); 
 
-const router = express.Router()
+const router = express.Router();
 
-router.get("/usuario", (req, res) => {
-    res.json(Usuario)
-})
+// registro
+router.post('/usuario', async (req, res) => {
+  const { nome, email, senha } = req.body;
 
-router.post("/usuario/:nome/:email/:senha", (req, res) => {
-    let {nome, email, senha} = req.params // params pega elementos pela url :)
-    if(Usuario.length == 0){
-        let id = 1
-        var usuario = {
-            id: id,
-            nome: nome,
-            email: email,
-            senha: senha
-        }
-    }else{
-        var usuario = {
-            id: Usuario.length + 1,
-            nome: nome,
-            email: email,
-            senha: senha
-        }
-    }
-    
-    Usuario.push(usuario)
-    res.json(Usuario)
-})
+  // já está cadastrado?
+  const usuarioExistente = await Usuario.findOne({ where: { email:email } });
+  if (usuarioExistente) {
+    return res.status(400).json({ error: 'Email já registrado.' });
+  }
 
-router.put("/usuario/:id/:nome/:email/:senha", (req, res) => {
-    let {id, nome, email, senha} = req.params
-    let usuario = Usuario.find(p => p.id == id)
-    if(usuario){
-        let atualizar = {
-            nome: nome,
-            email: email,
-            senha: senha
-        }
-        Object.assign(usuario,atualizar)  // assign att o json
-    }
-    res.json(Usuario)
-})
+  // criptografando
+  const salt = await bcrypt.genSalt(10);
+  const senhaCriptografada = await bcrypt.hash(senha, salt);
 
-router.delete("/usuario/:id", (req, res) => {
-    let id = req.params.id
-    let index = Usuario.findIndex(p => p.id == id)
-    if(index != -1){
-        Usuario.splice(index, 1)
-    }
-    res.json(Usuario)
-})
+  try {
+    const usuario = await Usuario.create({ nome, email, senha: senhaCriptografada });
+    res.status(201).json(usuario);
+  } catch (error) {
+    res.status(400).json({ error: 'Erro ao criar usuário.' });
+  }
+});
 
+// login de usuário
+router.post('/login', async (req, res) => {
+  const { email, senha } = req.body;
 
-module.exports = router
+  // ver se o usuário existe
+  const usuario = await Usuario.findOne({ where: { email } });
+  if (!usuario) {
+    return res.status(400).json({ error: 'Usuário não encontrado.' });
+  }
+
+  // ver se a senha está correta
+  const senhaValida = await bcrypt.compare(senha, usuario.senha);
+  if (!senhaValida) {
+    return res.status(400).json({ error: 'Senha incorreta.' });
+  }
+
+  // gerando (token de autenticação)
+  const token = jwt.sign({ id: usuario.id }, 'secreta_chave', { expiresIn: '1h' });
+
+  res.json({ token });
+});
+
+// buscar todos os usuários
+router.get('/usuarios', async (req, res) => {
+  try {
+    const usuarios = await Usuario.findAll();
+    res.json(usuarios);
+  } catch (error) {
+    res.status(400).json({ error: 'Erro ao buscar usuários.' });
+  }
+});
+
+// atualizar um usuário
+router.put('/usuario/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome, email, senha } = req.body;
+
+ 
+  const usuario = await Usuario.findByPk(id);
+  if (!usuario) {
+    return res.status(400).json({ error: 'Usuário não encontrado.' });
+  }
+
+  // criptografando a senha
+  if (senha) {
+    const salt = await bcrypt.genSalt(10);
+    const senhaCriptografada = await bcrypt.hash(senha, salt);
+    usuario.senha = senhaCriptografada;
+  }
+
+  // atualizando os dados do usuário
+  usuario.nome = nome;
+  usuario.email = email;
+
+  try {
+    await usuario.save();
+    res.json(usuario);
+  } catch (error) {
+    res.status(400).json({ error: 'Erro ao atualizar usuário.' });
+  }
+});
+
+// deletar um usuário
+router.delete('/usuario/:id', async (req, res) => {
+  const { id } = req.params;
+
+  // ver se o usuário existe
+  const usuario = await Usuario.findByPk(id);
+  if (!usuario) {
+    return res.status(400).json({ error: 'Usuário não encontrado.' });
+  }
+
+  try {
+    await usuario.destroy();
+    res.json({ message: 'Usuário deletado com sucesso.' });
+  } catch (error) {
+    res.status(400).json({ error: 'Erro ao deletar usuário.' });
+  }
+});
+
+module.exports = router;
