@@ -1,14 +1,32 @@
-Este projeto é uma API básica em Node.js usando Express e Sequelize para cadastro, login e gerenciamento de usuários.
+API Backend com Node.js, Sequelize e JWT
+Descrição
+API RESTful para gerenciar usuários, categorias, produtos e pedidos, com autenticação JWT.
 
+-----------------------------------------------------------------------------------------------
+Tecnologias:
+
+Node.js
+
+Express
+
+Sequelize (MySQL)
+
+JWT para autenticação
+
+dotenv para variáveis de ambiente
+
+Swagger para documentação
+
+-----------------------------------------------------------
 
 Você vai precisar ter instalado na sua máquina:
-
 Node.js (versão recomendada: 18+)
 MySQL
------------------------------------------------------------
-deve instalar todas as dependências listadas no package.json, incluindo express, sequelize, mysql2, bcrypt, jsonwebtoken
+
+deve instalar no terminal:
 
 npm install
+npm install express sequelize mysql2 dotenv jsonwebtoken bcryptjs swagger-jsdoc swagger-ui-express cors
 -----------------------------------------------------------
  configure a conexão com o banco de dados no arquivo onde você inicializa o Sequelize
 
@@ -27,35 +45,28 @@ module.exports = sequelize;
 -----------------------------------------------------------
 caso de tudo certo essas mensagens vão aparecer:
 
-Servidor rodando em http://localhost:3000
-Conexão com o banco de dados bem-sucedida!
 Banco de dados sincronizado!
+Servidor rodando em http://localhost:3000
+
 
 -----------------------------------------------------------
-rotas da API:
+Endpoints principais
+POST /usuarios/register — criar usuário
 
-POST /usuario → Cadastrar novo usuário
+POST /usuarios/login — login e obtenção do token JWT
 
-Exemplo: http://localhost:3000/usuario  
+GET /usuarios — listar usuários (rota protegida)
 
-POST /login → Login de usuário
+POST /categorias — criar categoria (rota protegida)
 
-GET /usuarios → Listar todos os usuários
+GET /categorias — listar categorias
 
-PUT /usuario/:id → Atualizar usuário
+PUT /categorias/:id — atualizar categoria (rota protegida)
 
-DELETE /usuario/:id → Deletar usuário
+DELETE /categorias/:id — deletar categoria (rota protegida)
 
------------------------------------------------------------
-Tecnologias usadas
-Node.js
+POST /produtos — criar produto (rota protegida)
 
-Express
+GET /produtos — listar produtos
 
-Sequelize ORM
-
-MySQL
-
-bcrypt
-
-JSON Web Token (JWT)
+e outros conforme a API
