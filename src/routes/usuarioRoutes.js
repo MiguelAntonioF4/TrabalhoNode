@@ -22,13 +22,20 @@ const autenticar = require('../middlewares/authMiddleware');
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - nome
+ *               - email
+ *               - senha
  *             properties:
  *               nome:
  *                 type: string
+ *                 example: Miguel Antonio
  *               email:
  *                 type: string
+ *                 example: miguel@email.com
  *               senha:
  *                 type: string
+ *                 example: senha123
  *     responses:
  *       201:
  *         description: Usuário criado com sucesso
@@ -49,11 +56,16 @@ router.post('/usuarios', usuarioController.registrarUsuario);
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - email
+ *               - senha
  *             properties:
  *               email:
  *                 type: string
+ *                 example: miguel@email.com
  *               senha:
  *                 type: string
+ *                 example: senha123
  *     responses:
  *       200:
  *         description: Login realizado com sucesso
@@ -118,8 +130,10 @@ router.get('/perfil', autenticar, usuarioController.perfilUsuario);
  *             properties:
  *               nome:
  *                 type: string
+ *                 example: Miguel Antonio
  *               email:
  *                 type: string
+ *                 example: miguel@email.com
  *     responses:
  *       200:
  *         description: Usuário atualizado com sucesso

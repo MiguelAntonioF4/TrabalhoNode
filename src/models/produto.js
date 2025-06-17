@@ -1,35 +1,25 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const Categoria = require('./categoria');
- 
+
 const Produto = sequelize.define('Produto', {
   id: {
     type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true
+    primaryKey: true,
+    autoIncrement: true
   },
-  name: {
+  nome: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: true
-  },
-  price: {
-    type: DataTypes.DECIMAL(10, 2),
+  preco: {
+    type: DataTypes.FLOAT,
     allowNull: false
   },
-  stock: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0
-  },
-  categoryId: {
+  categoriaId: {             // <-- aqui mudou de categoryId para categoriaId
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: Categoria,
+      model: 'categorias',   // nome da tabela no banco, ok
       key: 'id'
     }
   }
@@ -37,8 +27,18 @@ const Produto = sequelize.define('Produto', {
   tableName: 'produtos',
   timestamps: false
 });
- 
-// Relacionamento: Produto pertence a uma Categoria
-Produto.belongsTo(Categoria, { foreignKey: 'categoryId' });
- 
+
+Produto.associate = (models) => {
+  Produto.belongsTo(models.Categoria, {
+    foreignKey: 'categoriaId',  // alinhado com a coluna acima
+    onDelete: 'RESTRICT',       // opcional para proteger exclusão
+    onUpdate: 'CASCADE'
+  });
+
+  Produto.belongsToMany(models.Pedido, {
+    through: models.PedidoProduto,
+    foreignKey: 'produtoId'
+  });
+};
+
 module.exports = Produto;

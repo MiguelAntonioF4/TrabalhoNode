@@ -24,16 +24,23 @@ const autenticar = require('../middlewares/authMiddleware');
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - produtos
  *             properties:
  *               produtos:
  *                 type: array
  *                 items:
  *                   type: object
+ *                   required:
+ *                     - produtoId
+ *                     - quantidade
  *                   properties:
  *                     produtoId:
  *                       type: integer
+ *                       example: 1
  *                     quantidade:
  *                       type: integer
+ *                       example: 2
  *     responses:
  *       201:
  *         description: Pedido criado com sucesso
@@ -53,6 +60,12 @@ router.post('/pedidos', autenticar, pedidoController.criarPedido);
  *     responses:
  *       200:
  *         description: Lista de pedidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Pedido'
  *       401:
  *         description: Não autorizado
  */
@@ -76,6 +89,10 @@ router.get('/pedidos', autenticar, pedidoController.listarPedidosDoUsuario);
  *     responses:
  *       200:
  *         description: Pedido encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Pedido'
  *       404:
  *         description: Pedido não encontrado
  */

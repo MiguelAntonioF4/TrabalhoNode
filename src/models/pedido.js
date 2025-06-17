@@ -1,24 +1,32 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const Usuario = require('./usuario');
- 
+
 const Pedido = sequelize.define('Pedido', {
   id: {
     type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true
+    primaryKey: true,
+    autoIncrement: true
   },
-  userId: {
+  usuarioId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: Usuario,
-      key: 'id'
-    }
+    allowNull: false
   }
 }, {
   tableName: 'pedidos',
-  timestamps: false
+  timestamps: true,
+  createdAt: 'dataCriacao',
+  updatedAt: false
 });
- 
+
+Pedido.associate = (models) => {
+  Pedido.belongsTo(models.Usuario, {
+    foreignKey: 'usuarioId'
+  });
+
+  Pedido.belongsToMany(models.Produto, {
+    through: models.PedidoProduto,
+    foreignKey: 'pedidoId'
+  });
+};
+
 module.exports = Pedido;

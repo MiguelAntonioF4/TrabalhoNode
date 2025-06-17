@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
- 
+
 const Usuario = sequelize.define('Usuario', {
   id: {
     type: DataTypes.INTEGER,
@@ -14,14 +14,7 @@ const Usuario = sequelize.define('Usuario', {
   email: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: {
-      msg: 'Este e-mail já está em uso.'
-    },
-    validate: {
-      isEmail: {
-        msg: 'Formato de e-mail inválido.'
-      }
-    }
+    unique: true
   },
   senha: {
     type: DataTypes.STRING,
@@ -31,5 +24,11 @@ const Usuario = sequelize.define('Usuario', {
   tableName: 'usuarios',
   timestamps: false
 });
- 
+
+Usuario.associate = (models) => {
+  Usuario.hasMany(models.Pedido, {
+    foreignKey: 'usuarioId'
+  });
+};
+
 module.exports = Usuario;

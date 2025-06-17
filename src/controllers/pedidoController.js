@@ -1,88 +1,84 @@
 const Pedido = require('../models/pedido');
 const Produto = require('../models/produto');
 const PedidoProduto = require('../models/pedidoProduto');
-const Usuario = require('../models/usuario');
- 
+
 exports.criarPedido = async (req, res) => {
-  const userId = req.usuarioId;
-  const { produtos } = req.body; // [{ produtoId, quantidade }]
- 
   try {
+    const userId = req.usuarioId;
+    const { produtos } = req.body;
+
     if (!produtos || !Array.isArray(produtos) || produtos.length === 0) {
-      return res.status(400).json({ error: 'Lista de produtos inválida.' });
+      return res.status(400).json({ mensagem: 'Lista de produtos inválida' });
     }
- 
-    // Cria o pedido
-    const pedido = await Pedido.create({ userId });
- 
-    // Associa os produtos
+
+    const pedido = await Pedido.create({ usuarioId: userId });
+
     for (const item of produtos) {
       const produto = await Produto.findByPk(item.produtoId);
-      if (!produto) {
-        return res.status(400).json({ error: `Produto ID ${item.produtoId} não encontrado.` });
-      }
- 
+      if (!produto) continue;
+
       await PedidoProduto.create({
         pedidoId: pedido.id,
         produtoId: item.produtoId,
-        quantidade: item.quantidade || 1
+        quantidade: item.quantidade || 1,
       });
     }
- 
-    res.status(201).json({ message: 'Pedido criado com sucesso.', pedidoId: pedido.id });
+
+    res.status(201).json({ mensagem: 'Pedido criado com sucesso', pedidoId: pedido.id });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao criar pedido.' });
+    res.status(500).json({ mensagem: 'Erro ao criar pedido', erro: error.message });
   }
 };
- 
+
 exports.listarPedidosDoUsuario = async (req, res) => {
-  const userId = req.usuarioId;
- 
   try {
     const pedidos = await Pedido.findAll({
-      where: { userId },
+      where: { usuarioId: req.usuarioId },
       include: {
         model: Produto,
         through: { attributes: ['quantidade'] }
       }
     });
- 
-    res.json(pedidos);
+    res.status(200).json(pedidos);
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao buscar pedidos.' });
+    res.status(500).json({ mensagem: 'Erro ao listar pedidos', erro: error.message });
   }
 };
- 
+
 exports.buscarPedidoPorId = async (req, res) => {
-  const { id } = req.params;
- 
   try {
+    const { id } = req.params;
     const pedido = await Pedido.findByPk(id, {
       include: {
         model: Produto,
         through: { attributes: ['quantidade'] }
       }
     });
- 
-    if (!pedido) return res.status(404).json({ error: 'Pedido não encontrado.' });
- 
-    res.json(pedido);
+
+    if (!pedido || pedido.usuarioId !== req.usuarioId) {
+      return res.status(404).json({ mensagem: 'Pedido não encontrado ou não autorizado' });
+    }
+
+    res.status(200).json(pedido);
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao buscar pedido.' });
+    res.status(500).json({ mensagem: 'Erro ao buscar pedido', erro: error.message });
   }
 };
- 
+
 exports.cancelarPedido = async (req, res) => {
-  const { id } = req.params;
- 
-  const pedido = await Pedido.findByPk(id);
-  if (!pedido) return res.status(404).json({ error: 'Pedido não encontrado.' });
- 
   try {
+    const { id } = req.params;
+    const pedido = await Pedido.findByPk(id);
+
+    if (!pedido || pedido.usuarioId !== req.usuarioId) {
+      return res.status(404).json({ mensagem: 'Pedido não encontrado ou não autorizado' });
+    }
+
     await PedidoProduto.destroy({ where: { pedidoId: id } });
     await pedido.destroy();
-    res.json({ message: 'Pedido cancelado com sucesso.' });
+
+    res.status(200).json({ mensagem: 'Pedido cancelado com sucesso' });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao cancelar pedido.' });
+    res.status(500).json({ mensagem: 'Erro ao cancelar pedido', erro: error.message });
   }
 };
